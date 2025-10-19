@@ -71,9 +71,9 @@ jobs:
         with:  
           node-version: '18'  
             
-      - name: Pull uAssets  
+      - name: Build using make  
         run: |  
-          tools/pull-assets.sh  
+          make  
             
       - name: Determine version  
         id: version  
@@ -86,13 +86,10 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT  
           echo "Building version: $VERSION"  
             
-      - name: Build Chromium package  
+      - name: Package Chromium build  
         run: |  
-          tools/make-chromium.sh ${{ steps.version.outputs.VERSION }}  
-            
-      - name: Build Firefox package  
-        run: |  
-          tools/make-firefox.sh ${{ steps.version.outputs.VERSION }}  
+          cd dist/build  
+          zip -r uBlock0_${{ steps.version.outputs.VERSION }}.chromium.zip uBlock0.chromium/  
             
       - name: Generate release notes  
         run: |  
@@ -102,6 +99,13 @@ jobs:
           echo "- Build Date: $(date +'%Y-%m-%d %H:%M:%S UTC')" >> release-notes.md  
           echo "- Upstream Commit: ${{ needs.check-updates.outputs.latest_commit }}" >> release-notes.md  
           echo "- Commit URL: https://github.com/r58Playz/uBlock-mv3/commit/${{ needs.check-updates.outputs.latest_commit }}" >> release-notes.md  
+          echo "" >> release-notes.md  
+          echo "## Installation" >> release-notes.md  
+          echo "1. Download and extract the zip file" >> release-notes.md  
+          echo "2. Load unpacked extension in Chrome (chrome://extensions/)" >> release-notes.md  
+          echo "3. Add commandline flag: \`--allowlisted-extension-id=<extension_id>\`" >> release-notes.md  
+          echo "4. Enable 'Allow User Scripts' in extension settings" >> release-notes.md  
+          echo "5. Restart Chrome" >> release-notes.md  
           echo "" >> release-notes.md  
           if [ -f CHANGELOG.md ]; then  
             echo "## Recent Changes" >> release-notes.md  
@@ -118,7 +122,6 @@ jobs:
           prerelease: false  
           files: |  
             dist/build/uBlock0_${{ steps.version.outputs.VERSION }}.chromium.zip  
-            dist/build/uBlock0_${{ steps.version.outputs.VERSION }}.firefox.xpi  
         env:  
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
             
