@@ -2,7 +2,7 @@ name: Build and Release uBlock MV3
   
 on:  
   schedule:  
-    # 每天检查一次原仓库更新
+    # 每天检查一次原仓库更新  
     - cron: '0 0 * * *'  
   workflow_dispatch:  
     inputs:  
@@ -92,26 +92,20 @@ jobs:
         run: |  
           echo "${{ secrets.EXTENSION_PEM_KEY }}" > extension.pem  
             
-      - name: Install Chromium for CRX packaging  
+      - name: Install Chromium and Xvfb  
         run: |  
           sudo apt-get update  
-          sudo apt-get install -y chromium-browser  
+          sudo apt-get install -y chromium-browser xvfb  
             
       - name: Package as CRX  
         run: |  
-          chromium-browser \  
-            --pack-extension=dist/build/uBlock0.chromium \  
-            --pack-extension-key=extension.pem \  
-            --no-sandbox \  
-            --headless  
-      
-          # 移动并重命名生成的 CRX 文件  
+          xvfb-run chromium-browser --pack-extension=dist/build/uBlock0.chromium --pack-extension-key=extension.pem --no-sandbox --headless  
+            
           if [ -f dist/build/uBlock0.chromium.crx ]; then  
             mv dist/build/uBlock0.chromium.crx dist/build/uBlock0_${{ steps.version.outputs.VERSION }}.chromium.crx  
           fi  
-      
-          # 清理 PEM 文件  
-          rm -f extension.pem
+            
+          rm -f extension.pem  
             
       - name: Generate release notes  
         run: |  
